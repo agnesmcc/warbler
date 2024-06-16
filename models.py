@@ -38,6 +38,10 @@ class Likes(db.Model):
         primary_key=True
     )
 
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'message_id', name='unique_like'),
+    )
+
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete='cascade')
@@ -46,7 +50,6 @@ class Likes(db.Model):
     message_id = db.Column(
         db.Integer,
         db.ForeignKey('messages.id', ondelete='cascade'),
-        unique=True
     )
 
 
