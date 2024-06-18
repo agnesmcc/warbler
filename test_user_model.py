@@ -41,12 +41,33 @@ class UserModelTestCase(TestCase):
 
         self.client = app.test_client()
 
+        self.testuser = User.signup(username="testuser",
+                                    email="test@test",
+                                    password="testuser",
+                                    image_url=None)
+
+        self.testuser2 = User.signup(username="testuser2",
+                                     email="test2@test",
+                                     password="testuser2",
+                                     image_url=None)
+        
+        db.session.add_all([self.testuser, self.testuser2])
+        db.session.commit()
+
+        self.m1 = Message(text="Test message 1", user_id=self.testuser.id)
+        self.m2 = Message(text="Test message 2", user_id=self.testuser.id)
+        self.m3 = Message(text="Test message 3", user_id=self.testuser2.id)
+        self.m4 = Message(text="Test message 4", user_id=self.testuser2.id)
+
+        db.session.add_all([self.m1, self.m2, self.m3, self.m4])
+        db.session.commit()
+
     def test_user_model(self):
         """Does basic model work?"""
 
         u = User(
-            email="test@test.com",
-            username="testuser",
+            email="test3@test.com",
+            username="testuser3",
             password="HASHED_PASSWORD"
         )
 
@@ -56,3 +77,11 @@ class UserModelTestCase(TestCase):
         # User should have no messages & no followers
         self.assertEqual(len(u.messages), 0)
         self.assertEqual(len(u.followers), 0)
+
+    def test_repr(self):
+        """Does the repr method work?"""
+
+        self.assertEqual(repr(self.testuser), 
+            f"<User #{self.testuser.id}: {self.testuser.username}, {self.testuser.email}>")
+        self.assertEqual(repr(self.testuser2), 
+            f"<User #{self.testuser2.id}: {self.testuser2.username}, {self.testuser2.email}>")
