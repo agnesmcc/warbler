@@ -85,3 +85,15 @@ class UserModelTestCase(TestCase):
             f"<User #{self.testuser.id}: {self.testuser.username}, {self.testuser.email}>")
         self.assertEqual(repr(self.testuser2), 
             f"<User #{self.testuser2.id}: {self.testuser2.username}, {self.testuser2.email}>")
+
+    def test_following(self):
+        """Does following detect when a user is following another user?"""
+        self.testuser.following.append(self.testuser2)
+        db.session.commit()
+        self.assertTrue(self.testuser.is_following(self.testuser2))
+
+    def test_not_following(self):
+        """Does following detect when a user is not following another user?"""
+        self.assertFalse(self.testuser2.is_following(self.testuser))
+
+
