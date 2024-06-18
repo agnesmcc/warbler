@@ -9,6 +9,7 @@ import os
 from unittest import TestCase
 
 from models import db, User, Message, Follows
+from sqlalchemy.exc import IntegrityError
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -31,6 +32,16 @@ db.create_all()
 
 class UserModelTestCase(TestCase):
     """Test views for messages."""
+
+    
+    def tearDown(self):
+        """Clean up after each test."""
+        try:
+            db.session.rollback()
+        except InvalidRequestError:
+            pass
+        finally:
+            db.session.close()
 
     def setUp(self):
         """Create test client, add sample data."""
@@ -106,3 +117,37 @@ class UserModelTestCase(TestCase):
         """Does is_followed_by detect when a user is not followed by another user?"""
         self.assertFalse(self.testuser.is_followed_by(self.testuser2))
 
+
+    def test_failed_creation(self):
+        """Does user creation fail with bad data?"""
+
+        first_user = User(
+            email="test3@test.com",
+            username="testuser3",
+            password="HASHED_PASSWORD"
+        )
+
+        db.session.add(first_user)
+        db.session.commit()
+
+        # test that a duplicate user cannot be created
+        duplicate_user = User(
+            email="test3@test.com",
+            username="testuser3",
+            password="HASHED_PASSWORD"
+        )
+
+        with self.assertRaises(IntegrityError):
+            db.session.add(duplicate_user)
+            db.session.commit()
+
+        db.session.rollback()    
+    
+        # test that a user cannot be created with a null password
+        with self.assertRaises(IntegrityError):
+            db.session.add(User(
+                email="test4@test.com",
+                username="testuser4",
+                password=None
+            ))
+            db.session.commit()
