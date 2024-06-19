@@ -103,3 +103,13 @@ class MessageModelTestCase(TestCase):
             db.session.commit()
 
         db.session.rollback()
+
+    def test_user_messages_lists_all_messages(self):
+        """Does the user_messages method list all messages?"""
+
+        self.assertEqual(len(self.testuser.messages), 2)
+
+        self.assertEqual(self.testuser.messages[0].text, "Test message 1")
+        self.assertEqual(self.testuser.messages[1].text, "Test message 2")
+
+    
