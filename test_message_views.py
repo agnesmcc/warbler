@@ -119,3 +119,21 @@ class MessageViewTestCase(TestCase):
             msg = Message.query.one_or_none()
             self.assertIsNone(msg)
     
+    def test_logged_in_user_cannot_delete_another_users_messages(self):
+        """Can logged in user delete another user's messages?"""
+
+        m = Message(text="Test message", user_id=self.testuser.id)
+        db.session.add(m)
+        db.session.commit()
+
+        msg_id = m.id # To avoid DetachedInstanceError http://sqlalche.me/e/bhk3
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id + 1
+
+            resp = c.post(f"/messages/{msg_id}/delete")
+
+            self.assertEqual(resp.status_code, 302)
+            m = Message.query.get(msg_id)
+            self.assertIsNotNone(m)
