@@ -92,3 +92,30 @@ class MessageViewTestCase(TestCase):
             m = Message.query.get(m.id)
             self.assertIsNone(m)
 
+    def test_logged_out_users_cannot_delete_messages(self):
+        """Can logged out users delete messages?"""
+
+        m = Message(text="Test message", user_id=self.testuser.id)
+        db.session.add(m)
+        db.session.commit()
+
+        msg_id = m.id # To avoid DetachedInstanceError http://sqlalche.me/e/bhk3
+
+        with self.client as c:
+            resp = c.post(f"/messages/{msg_id}/delete")
+
+            self.assertEqual(resp.status_code, 302)
+            m = Message.query.get(msg_id)
+            self.assertIsNotNone(m)
+    
+    def test_looged_out_users_cannot_add_messages(self):
+        """Can logged out users add messages?"""
+
+        with self.client as c:
+            resp = c.post("/messages/new", data={"text": "Hello"})
+
+            self.assertEqual(resp.status_code, 302)
+
+            msg = Message.query.one_or_none()
+            self.assertIsNone(msg)
+    
