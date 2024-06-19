@@ -112,4 +112,10 @@ class MessageModelTestCase(TestCase):
         self.assertEqual(self.testuser.messages[0].text, "Test message 1")
         self.assertEqual(self.testuser.messages[1].text, "Test message 2")
 
-    
+    def test_deleting_user_deletes_messages(self):
+        """Does the delete_user method delete all messages?"""
+
+        db.session.delete(self.testuser)
+        db.session.commit()
+
+        self.assertEqual(len(Message.query.all()), 2)
