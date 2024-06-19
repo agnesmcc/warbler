@@ -151,3 +151,18 @@ class UserModelTestCase(TestCase):
                 password=None
             ))
             db.session.commit()
+
+    def test_user_authenticate_success(self):
+        """Does user authentication work?"""
+        user = User.authenticate(self.testuser.username, "testuser")
+        self.assertEqual(user, self.testuser)
+
+    def test_user_authenticate_fail_invalid_username(self):
+        """Does user authentication fail with invalid username?"""
+        user = User.authenticate("testuser3", "testuser")
+        self.assertFalse(user)
+    
+    def test_user_authenticate_fail_invalid_password(self):
+        """Does user authentication fail with invalid password?"""
+        user = User.authenticate(self.testuser.username, "testuser3")
+        self.assertFalse(user)
