@@ -119,3 +119,12 @@ class MessageModelTestCase(TestCase):
         db.session.commit()
 
         self.assertEqual(len(Message.query.all()), 2)
+
+    def test_deleting_a_message(self):
+        """Does the deleting a message work?"""
+
+        db.session.delete(self.m1)
+        db.session.commit()
+
+        self.assertEqual(len(Message.query.all()), 3)
+        self.assertEqual(len(self.testuser.messages), 1)
