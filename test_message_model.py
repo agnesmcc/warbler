@@ -9,7 +9,7 @@ import os
 from unittest import TestCase
 
 from models import db, User, Message, Follows
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -91,4 +91,15 @@ class MessageModelTestCase(TestCase):
             db.session.add(m5)
             db.session.commit()
 
-        db.session.rollback() 
+        db.session.rollback()
+
+    def test_create_message_fail_with_long_text(self):
+        """Does the message model fail to create new messages with a long text?"""
+
+        m5 = Message(text="a" * 1000, user_id=self.testuser.id)
+
+        with self.assertRaises(DataError):
+            db.session.add(m5)
+            db.session.commit()
+
+        db.session.rollback()
