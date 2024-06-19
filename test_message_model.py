@@ -9,6 +9,7 @@ import os
 from unittest import TestCase
 
 from models import db, User, Message, Follows
+from sqlalchemy.exc import IntegrityError
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -81,4 +82,13 @@ class MessageModelTestCase(TestCase):
 
         self.assertEqual(m5.user_id, self.testuser.id)
 
-    
+    def test_create_message_with_invalid_user(self):
+        """Does the message model fail to create new messages with an invalid user?"""
+
+        m5 = Message(text="Test message 5", user_id=1000)
+
+        with self.assertRaises(IntegrityError):
+            db.session.add(m5)
+            db.session.commit()
+
+        db.session.rollback() 
