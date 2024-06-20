@@ -53,7 +53,11 @@ class UserViewTestCase(TestCase):
                                     email="test2@test.com",
                                     password="testuser2",
                                     image_url=None)
+        db.session.commit()
 
+        self.testmsg1 = Message(text="Test message 1", user_id=self.testuser.id)
+        self.testmsg2 = Message(text="Test message 2", user_id=self.testuser2.id)
+        db.session.add_all([self.testmsg1, self.testmsg2])
         db.session.commit()
 
     def test_user_signup(self):
@@ -139,7 +143,24 @@ class UserViewTestCase(TestCase):
                      "image_url": None}, 
                 follow_redirects=True)
 
-            print(resp.data.decode("utf-8"))
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(User.query.count(), 2)
             self.assertIn(b"testuser3", resp.data)
+
+    def test_user_add_like(self):
+        """Can user like another user's message?"""
+        testmsg2_id = self.testmsg2.id
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            resp = c.post(f"/users/add_like/{testmsg2_id}", follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            testuser = User.query.get(self.testuser.id)
+            self.assertIn(testmsg2_id, [m.id for m in testuser.likes])
+
+            resp = c.post(f"/users/add_like/{testmsg2_id}", follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            testuser = User.query.get(self.testuser.id)
+            self.assertNotIn(testmsg2_id, [m.id for m in testuser.likes])
