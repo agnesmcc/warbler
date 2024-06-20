@@ -72,6 +72,7 @@ class UserViewTestCase(TestCase):
             resp = c.get("/users")
             self.assertEqual(resp.status_code, 200)
             self.assertIn(b"testuser", resp.data)
+            self.assertIn(b"testuser2", resp.data)
 
     def test_user_show_profile(self):
         """Can user show profile?"""
@@ -108,3 +109,37 @@ class UserViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertNotIn(b"testuser2", resp.data)
 
+    def test_user_delete(self):
+        """Can user delete themselves?"""
+
+        testuser1_id = self.testuser.id
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            resp = c.post(f"/users/delete", follow_redirects=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(User.query.get(testuser1_id), None)
+            
+    def test_user_edit_profile(self):
+        """Can user edit their profile?"""
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            resp = c.get(f"/users/profile")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(b"testuser", resp.data)
+
+            resp = c.post(f"/users/profile", 
+                data={"username": "testuser3",
+                     "password": "testuser", # This is the user's password not a new one
+                     "email": "test3@test.com",
+                     "image_url": None}, 
+                follow_redirects=True)
+
+            print(resp.data.decode("utf-8"))
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(User.query.count(), 2)
+            self.assertIn(b"testuser3", resp.data)
